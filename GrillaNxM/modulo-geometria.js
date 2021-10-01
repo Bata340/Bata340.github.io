@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function(){
     //SELECTOR DE CANTIDAD DE COLUMNAS
     element = document.createElement('div');
     element.style = 'float:left';
-    element.innerHTML = "<label>Filas: <input id='cols' type='number'></input></label>";
+    element.innerHTML = "<label>Columnas: <input id='cols' type='number'></input></label>";
     document.getElementById('myCanvas').before(element);
 
     document.getElementById('cols').addEventListener("change", function(){
