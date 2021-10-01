@@ -141,6 +141,17 @@ function Esfera(radio){
     }
 }
 
+function getNorma(v){
+    return Math.sqrt(v[0]**2+v[1]**2+v[2]**2)
+}
+
+function productoVectorial(v1, v2){
+    var x = (v1[1]*v2[2])-(v2[2]*v1[1]);
+    var y = (v1[2]*v2[0]) - (v1[0]*v2[2]);
+    var z = (v1[0]*v2[1]) - (v1[1]*v2[0]);
+    return [x,y,z];
+}
+
 function TuboSenoidal(amplitud, long_onda, radio, altura){
     this.getPosicion = function(u,v){
         var radio_variable = radio + amplitud * Math.sin(Math.PI*2*altura*v/long_onda);
@@ -152,7 +163,28 @@ function TuboSenoidal(amplitud, long_onda, radio, altura){
     }
 
     this.getNormal = function(u,v){
-        return [0,1,0];
+        var p0,p1,p2;
+        p0 = this.getPosicion(u,v);
+        if (u>0.5){
+            p1 = this.getPosicion(u-0.01,v);
+        }else{
+            p1 = this.getPosicion(u+0.01,v)
+        }
+        if (v>0.5){
+            p2 = this.getPosicion(u, v-0.01);
+        }else{
+            p2 = this.getPosicion(u, v+0.01);
+        }
+        
+        // (p2-p0) x (p1-p0) = Vector Normal -> Normalizarlo y tenemos la normal
+        var vec1 = [p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2]];
+        var vec2 = [p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]];
+        var normal = productoVectorial(vec1,vec2);
+        var normaNormal = getNorma(normal);
+        normal[0] = normal[0]/normaNormal;
+        normal[1] = normal[1]/normaNormal;
+        normal[2] = normal[2]/normaNormal;
+        return normal;
     }
     
     this.getCoordenadasTextura = function(u,v){
