@@ -4,28 +4,46 @@ import Estacion from './PartesEstacion/Estacion.js';
 import * as dat from '../node_modules/dat.gui/build/dat.gui.module.js';
 import Capsula from './PartesEstacion/Capsula.js';
 import Camara from './Camara.js';
+import Plano from './Primitivas/Plano.js';
 
 var mat4 = glMatrix.mat4;
 var vec3 = glMatrix.vec3;
+var vec4 = glMatrix.vec4;
 
-var params = {cantidadPaneles:1, anguloPaneles:0, cantidadModulosEnAro: 4, velocidadRotacionAro:0.02, ReiniciarEstacion: reinitWebGL};
+var params = {
+    cantidadPaneles:1, 
+    anguloPaneles:0, 
+    cantidadModulosEnAro: 4, 
+    velocidadRotacionAro:0.02, 
+    ReiniciarEstacion: reinitWebGL, 
+    setAnguloPaneles: setAnguloPaneles, 
+    setVelocidadRotacionAro: setVelocidadRotacionAro
+};
 
 var gui = new dat.GUI();
 gui.add(params, "cantidadPaneles",1,10).step(1);
 gui.add(params, "anguloPaneles",0,Math.PI*2).step(0.05);
 gui.add(params, "cantidadModulosEnAro",2,8,).step(1);
+gui.add(params,'setAnguloPaneles');
 gui.add(params, "velocidadRotacionAro",0, 0.2).step(0.01);  
+gui.add(params, 'setVelocidadRotacionAro');
 gui.add(params,'ReiniciarEstacion');
+
+function setAnguloPaneles(){
+    objects[1].setRotacionPaneles(params.anguloPaneles);
+}
+
+function setVelocidadRotacionAro(){
+    objects[1].setVelocidadRotacionAro(params.velocidadRotacionAro);
+}
 
 
 var objects = [];
 let camara = null;
 let matrizCamara = null;
 let requiredAnimFrame = null;
-
-/*let matrizCamara = mat4.create();
-mat4.identity(matrizCamara);
-mat4.translate(matrizCamara, matrizCamara, vec3.fromValues(0,0,-15));*/
+let textureReflect = null;
+let imageReflect = null;
 
 var gl = null,
     canvas = null,
@@ -67,34 +85,50 @@ function reinitWebGL(){
     if (requiredAnimFrame != null){
         window.cancelAnimationFrame(requiredAnimFrame);
     }
-    pushObjects();
+    pushObjects(glContainerObj);
     setupBuffers();
     setupVertexShaderMatrix();
     tick();   
 }
 
-function pushObjects(){
+function pushObjects(glContainer){
     objects = [];
 
-    let capsula = new Capsula();
-    capsula.setColor(185/255,162/255,128/255);
+    let capsula = new Capsula(glContainer);
     capsula.setPosicion(-10,0,0);
     capsula.setEscala(0.5, 0.5, 0.5);
+    capsula.setShininess(0.5);
     objects.push(capsula);
 
-    let estacionEspacial = new Estacion(params.cantidadPaneles,params.anguloPaneles,params.velocidadRotacionAro, params.cantidadModulosEnAro);
+    let estacionEspacial = new Estacion(params.cantidadPaneles,params.anguloPaneles,params.velocidadRotacionAro, params.cantidadModulosEnAro, glContainer);
     estacionEspacial.setPosicion(0,0,0);
     estacionEspacial.setRotacion(0,0,0,0);
     estacionEspacial.setRotacionFinal(0,0,0,0);
+    estacionEspacial.setShininess(0.5);
     objects.push(estacionEspacial);
 
 
-    let mundoSimulado = new Esfera(200, 1);
-    mundoSimulado.setPosicion(0,0,-250);
-    mundoSimulado.setColor(67/255,112/255,153/255);
-    mundoSimulado.setFilas(150);
-    mundoSimulado.setColumnas(150);
+    let mundoSimulado = new Esfera(25, 1, glContainer);
+    mundoSimulado.setPosicion(0,0,-40);
+    mundoSimulado.setRotacionFinal(1,0,-1,Math.PI/4);
+    mundoSimulado.initTextures('/models/tierra_redim.jpg');
+    mundoSimulado.setShininess(0);
     objects.push(mundoSimulado);
+
+    let luna = new Esfera(5, 1, glContainer);
+    luna.setPosicion(30, 0, 0);
+    luna.setRotacionFinal(0,0,1,Math.PI/4);
+    luna.initTextures('/models/luna.jpg');
+    luna.setShininess(0);
+    objects.push(luna);
+
+
+    let sol = new Plano(25, 25, glContainer);
+    sol.setPosicion(-25, 0, 0);
+    sol.initTextures('/models/sun.jpg');
+    sol.setRotacionFinal(0,0,1,Math.PI/2);
+    sol.setShininess(1000);
+    objects.push(sol);
 
     camara = new Camara(capsula, estacionEspacial.getPosActual(), estacionEspacial.getPosPaneles());
 }
@@ -120,7 +154,7 @@ function initWebGL(){
 
         setupWebGL();
         initShaders();
-        pushObjects();
+        pushObjects(glContainerObj);
         setupBuffers();
         setupVertexShaderMatrix();
         tick();   
@@ -182,6 +216,8 @@ function makeShader(src, type){
     gl.shaderSource(shader, src);
     gl.compileShader(shader);
 
+    initReflectionTexture('/models/earth_refmap_cut.jpg');
+
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
         console.log("Error compiling shader: " + gl.getShaderInfoLog(shader));
     }
@@ -203,11 +239,92 @@ function setupVertexShaderMatrix(){
 function setupBuffers(){
     //Aplicar transformaciones de cámara basado en la matriz actual de cámara y sus parámetros de traslación y rotación
     
-
     objects.forEach(function(object){
         object.dibujar();
         object.generateBuffers(glContainerObj);
     });
+}
+
+function loadTexture(){
+    let gl = glContainerObj.getGL();
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+function initReflectionTexture(src){
+    let gl = glContainerObj.getGL();
+    textureReflect = gl.createTexture();
+    if (!textureReflect){
+        console.log("ERROR: Not able to create texture.");
+    }
+    imageReflect = new Image();
+    if (!imageReflect){
+        console.log("ERROR: Not able to create image.");
+    }
+    imageReflect.src = src;
+    imageReflect.glContainer = glContainerObj;
+    imageReflect.texture = textureReflect;
+    imageReflect.onload = loadTexture;
+}
+
+function calculateLightsElements(){
+    gl = glContainerObj.getGL();
+    glProgram = glContainerObj.getGLProgram();
+    
+    //SunLight
+    let posicionSol = objects[4].getPosActual();
+    gl.uniformMatrix4fv(gl.getUniformLocation(glProgram, "viewMatrix"), false, matrizCamara);
+
+    gl.uniform1f (gl.getUniformLocation(glProgram, "SunIntensityA"), 0.2);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "SunIntensityD"), 1);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "SunIntensityS"), 0.25);
+    gl.uniform4fv(gl.getUniformLocation(glProgram, "SunLightPositionWorld"), posicionSol);
+
+    let posicionTierra = objects[2].getPosActual();
+    gl.uniform1i(gl.getUniformLocation(glProgram, "reflectionSampler"), 1);
+    gl.activeTexture(gl.TEXTURE0 + 1); // Texture unit 1
+    gl.bindTexture(gl.TEXTURE_2D, textureReflect);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "EarthIntensityS"), 0.55);
+    gl.uniform3fv(gl.getUniformLocation(glProgram, "earthLightDir"), vec3.fromValues(0,0,-1));
+    gl.uniform4fv(gl.getUniformLocation(glProgram, "EarthLightPositionWorld"), posicionTierra);
+
+    let posicionRojo = objects[0].getPosLuzRoja();
+    gl.uniform1f (gl.getUniformLocation(glProgram, "RedIntensityA"), 0);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "RedIntensityD"), 0.75);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "RedIntensityS"), 0.5);
+    gl.uniform4fv(gl.getUniformLocation(glProgram, "RedLightPositionWorld"), posicionRojo);
+
+    let posicionVerde = objects[0].getPosLuzVerde();
+    
+    gl.uniform1f (gl.getUniformLocation(glProgram, "GreenIntensityA"), 0);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "GreenIntensityD"), 0.75);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "GreenIntensityS"), 0.5);
+    gl.uniform4fv(gl.getUniformLocation(glProgram, "GreenLightPositionWorld"), posicionVerde);
+
+
+    let posicionSpot = objects[0].getPosActualSpot();
+    let direccionSpot = objects[0].getDireccionSpot();
+    //gl.uniform4fv (gl.getUniformLocation(glProgram, "Spot.position"), posicionCapsula);
+    gl.uniform4fv (gl.getUniformLocation(glProgram, "Spot.position"), vec4.fromValues(posicionSpot[0], posicionSpot[1], posicionSpot[2],1));
+    gl.uniform1f (gl.getUniformLocation(glProgram, "Spot.intensityA"), 0.0);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "Spot.intensityD"), 1.0);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "Spot.intensityS"), 0.25);
+    gl.uniform3fv (gl.getUniformLocation(glProgram, "Spot.direction"), vec3.fromValues(direccionSpot[0], direccionSpot[1], direccionSpot[2]));
+    gl.uniform1f (gl.getUniformLocation(glProgram, "Spot.exponent"), 0.25);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "Spot.cutoff"), 30);
+}
+
+function sunLuminosity(){
+    gl = glContainerObj.getGL();
+    glProgram = glContainerObj.getGLProgram();
+
+    gl.uniform1f (gl.getUniformLocation(glProgram, "SunIntensityA"), 1);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "SunIntensityD"), 0);
+    gl.uniform1f (gl.getUniformLocation(glProgram, "SunIntensityS"), 0);
 }
 
 function tick(){
@@ -216,10 +333,12 @@ function tick(){
 
     //Set background color to black
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    gl.clearColor(0, 0, 0, 0.95);
+    gl.clearColor(0, 0, 0, 1);
 
     //
     matrizCamara = camara.getCameraMatrix();
+    
+    
 
     //Draw elements
     drawScene();
@@ -227,8 +346,24 @@ function tick(){
 
 function drawScene(){
     setupVertexShaderMatrix();
-    objects.forEach(function(object){
-        object.animate(glContainerObj, matrizCamara);
+    objects.forEach(function(object, index){
+
+        gl.uniformMatrix4fv(gl.getUniformLocation(glProgram, "viewMatrix"), false, matrizCamara);
+        let cameraPos = vec4.fromValues(0,0,0,1);
+        vec4.transformMat4(cameraPos, cameraPos, matrizCamara);
+        gl.uniform3fv(gl.getUniformLocation(glProgram, "cameraPos"), vec3.fromValues(cameraPos[0]/cameraPos[3], cameraPos[1]/cameraPos[3], cameraPos[2]/cameraPos[3]));
+        
+        if (index === 4){
+            sunLuminosity();
+        }else{
+            calculateLightsElements();
+        }
+        let normalSpotMatrix = mat4.create();
+        mat4.invert(normalSpotMatrix, matrizCamara);
+        mat4.transpose(normalSpotMatrix, normalSpotMatrix);
+        gl.uniformMatrix4fv(gl.getUniformLocation(glProgram, "normalSpotMatrix"), false, normalSpotMatrix);
+        object.animate(glContainerObj, mat4.create());
+        
     })
     
 }
@@ -293,10 +428,10 @@ document.addEventListener('keydown', (event) => {
     if (event.code == 'KeyK'){
         capsula.sumCabeceo(-DELTA_ROTACION);
     }
-    if (event.code == 'KeyU'){
+    if (event.code == 'KeyO'){
         capsula.sumAlabeo(DELTA_ROTACION);
     }
-    if (event.code == 'KeyO'){
+    if (event.code == 'KeyU'){
         capsula.sumAlabeo(-DELTA_ROTACION);
     }
 }, false);
@@ -346,7 +481,7 @@ document.addEventListener('keyup', (event) => {
 let mouseClick = false;
 let oldX = 0;
 let oldY = 0;
-let velRot = 0.01;
+let velRot = 0.03;
 
 let downListener = () => {
     mouseClick = true;

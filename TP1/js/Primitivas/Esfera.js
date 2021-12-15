@@ -1,8 +1,8 @@
 import Objeto3D from '../Objeto3D.js';
 
 export default class Esfera extends Objeto3D{
-    constructor(radio, ratioRecorrido){
-        super();
+    constructor(radio, ratioRecorrido, glContainer){
+        super(glContainer);
         this.radio = radio;
         if(ratioRecorrido > 1){
             throw new Error('Ratio Recorrido en Trompo es mayor a 1: ' + ratioRecorrido);
@@ -29,6 +29,6 @@ export default class Esfera extends Objeto3D{
     }
 
     getCoordenadasTextura(u,v){
-        return[u,v];
+        return[v,u];
     }
 }

@@ -1,8 +1,8 @@
 import Objeto3D from '../Objeto3D.js';
 
 export default class Toroide extends Objeto3D{
-    constructor(radioForma, radioRecorrido, ratioLargoRecorrido=1, ratioLargoForma=1){
-        super();
+    constructor(radioForma, radioRecorrido, ratioLargoRecorrido=1, ratioLargoForma=1, glContainer){
+        super(glContainer);
         this.radioForma = radioForma;
         if(ratioLargoRecorrido > 1 || ratioLargoForma > 1){
             throw new Error('Ratio Recorrido en Toroide es mayor a 1. RatioLargoRecorrido= ' + ratioLargoRecorrido + ' ; RatioLargoForma = ' + ratioLargoForma);

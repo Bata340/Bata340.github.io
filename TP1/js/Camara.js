@@ -14,7 +14,7 @@ export default class Camara{
         this.posicionPaneles = posicionPaneles;
         this.posicionEstacion = posicionEstacion;
         this.objetoCapsula = objetoCapsula;
-        this.alejamiento = 1;
+        this.alejamiento = 10;
         this.rotacionActual = 0;
         this.velocidadRotacion = 0.002;
 
@@ -37,11 +37,12 @@ export default class Camara{
     }
 
     acercar(){
-        this.alejamiento -= 0.5;
+        if ((this.alejamiento - 0.55) > 0)
+            this.alejamiento -= 0.55;
     }
 
     alejar(){
-        this.alejamiento += 0.5;
+        this.alejamiento += 0.55;
     }
 
     getCameraMatrix(){

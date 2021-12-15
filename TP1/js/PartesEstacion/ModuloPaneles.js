@@ -7,20 +7,20 @@ import '../gl-matrix/gl-matrix-min.js';
 var vec3 = glMatrix.vec3;
 
 export default class Paneles extends Objeto3D{
-    constructor(cantidadPaneles, rotacionPaneles){
-        super();
+    constructor(cantidadPaneles, rotacionPaneles, glContainer){
+        super(glContainer);
         this.filas = 0;
         this.columnas = 0;
         this.cantidadPaneles = cantidadPaneles;
-        let cilindroInicial = new Trompo(0.125,1,0);
-        cilindroInicial.setColor(246/255,217/255,238/255);
+        let cilindroInicial = new Trompo(0.125,1,0, glContainer);
+        cilindroInicial.initTextures('/models/grayMetal_redim.png');
         this.hijos.push(cilindroInicial);
         for(let i=0; i < cantidadPaneles; i++){
-            let cilindro = new Trompo(0.125,1,0);
-            cilindro.setColor(246/255,217/255,238/255);
+            let cilindro = new Trompo(0.125,1,0, glContainer);
+            cilindro.initTextures('/models/grayMetal_redim.png');
             cilindro.setPosicion(0,1*(i+1),0);
-            let panelIzquierdo = new Panel(rotacionPaneles);
-            let panelDerecho = new Panel(-rotacionPaneles);
+            let panelIzquierdo = new Panel(rotacionPaneles, glContainer);
+            let panelDerecho = new Panel(-rotacionPaneles, glContainer);
             panelIzquierdo.setRotacionFinal(0,0,1, -Math.PI/2);
             panelIzquierdo.setPosicion(0,1*(i+1)+0.75,0);
             panelDerecho.setRotacionFinal(0,0,1, Math.PI/2);
@@ -29,12 +29,12 @@ export default class Paneles extends Objeto3D{
             this.hijos.push(panelIzquierdo);
             this.hijos.push(panelDerecho);
         }
-        let tapaSuperior = new Circulo(0.125);
+        let tapaSuperior = new Circulo(0.125, glContainer);
         tapaSuperior.setPosicion(0,cantidadPaneles+1,0);
-        tapaSuperior.setColor(246/255,217/255,238/255);
+        tapaSuperior.initTextures('/models/grayMetal_redim.png');
         this.hijos.push(tapaSuperior);
-        let tapaInferior = new Circulo(0.125);
-        tapaInferior.setColor(246/255,217/255,238/255);
+        let tapaInferior = new Circulo(0.125, glContainer);
+        tapaInferior.initTextures('/models/grayMetal_redim.png');
         this.hijos.push(tapaInferior);
     }
 
@@ -48,5 +48,13 @@ export default class Paneles extends Objeto3D{
 
     getPosActual(){
         return vec3.fromValues(this.posicion[0], this.posicion[1]+parseFloat((this.cantidadPaneles)/4)-1, this.posicion[2]);
+    }
+
+    setRotacionPaneles(rotacion){
+        this.hijos[1].setRotacion(0,1,0, rotacion);
+        for(let i=2; i<this.hijos.length-2; i+=3){
+            this.hijos[i].setRotacionPaneles(rotacion);
+            this.hijos[i+1].setRotacionPaneles(-rotacion);
+        }
     }
 }

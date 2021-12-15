@@ -4,8 +4,8 @@ import '../gl-matrix/gl-matrix-min.js';
 var vec3 = glMatrix.vec3;
 
 export default class Circulo extends Objeto3D{
-    constructor(radio){
-        super();
+    constructor(radio, glContainer){
+        super(glContainer);
         this.radio = radio;
     }
 

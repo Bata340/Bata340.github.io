@@ -6,11 +6,13 @@ import Plano from './Plano.js'
 var vec3 = glMatrix.vec3;
 
 export default class Prisma extends Objeto3D{
-    constructor(largo, ancho, alto){
-        super();
+    constructor(largo, ancho, alto, glContainer){
+        super(glContainer);
         this.largo = largo;
         this.ancho = ancho;
         this.alto = alto;
+        this.filas = 60;
+        this.columnas = 60;
         let cara_baja = new Plano(largo, ancho);
         let cara_alta = new Plano(largo, ancho);
         cara_baja.setPosicion(0, alto, 0);
@@ -55,7 +57,7 @@ export default class Prisma extends Objeto3D{
     }
     
     getCoordenadasTextura(u,v){
-        return[u,v];
+        return[u*5-0.0125,v*1.25];
     }
     
 }

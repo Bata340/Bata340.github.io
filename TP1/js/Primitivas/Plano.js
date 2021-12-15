@@ -4,8 +4,8 @@ import '../gl-matrix/gl-matrix-min.js';
 var vec3 = glMatrix.vec3;
 
 export default class Plano extends Objeto3D{
-    constructor(largo, ancho){
-        super();
+    constructor(largo, ancho, glContainer){
+        super(glContainer);
         this.largo = largo;
         this.ancho = ancho;
     }

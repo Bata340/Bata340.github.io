@@ -2,6 +2,7 @@ import Objeto3D from '../Objeto3D.js';
 import '../gl-matrix/gl-matrix-min.js';
 import {getBezierPointCuadratic} from '../Primitivas/CurvasBezier.js';
 import TuboCapsula from './TuboCapsula.js';
+import Esfera from '../Primitivas/Esfera.js';
 
 var vec3 = glMatrix.vec3;
 var mat4 = glMatrix.mat4;
@@ -11,12 +12,20 @@ let FACTOR_INERCIA=0.05;
 
 
 export default class Capsula extends Objeto3D{
-    constructor(){
-        super();
-        let camara = new TuboCapsula();
+    constructor(glContainer){
+        super(glContainer);
+        let camara = new TuboCapsula(glContainer);
+        let luzVerde = new Esfera(0.05, 1, glContainer);
+        let luzRoja = new Esfera(0.05, 1, glContainer);
+        luzVerde.setPosicion(0.42, 0, 0.385);
+        luzRoja.setPosicion(0.42, 0, -0.385);
+        this.hijos.push(luzVerde);
+        this.hijos.push(luzRoja);
+        luzVerde.initTextures('models/verde.jpg');
+        luzRoja.initTextures('models/rojo.png');
         camara.setRotacion(0,1,0, Math.PI);
         camara.setPosicion(1,0,0);
-        camara.setColor(67/255,67/255,67/255);
+        camara.initTextures('models/grayMetal_redim.png');
         this.hijos.push(camara);
         this.xRotVel = 0;
         this.xRotVelTarget = 0;
@@ -30,7 +39,10 @@ export default class Capsula extends Objeto3D{
         this.yVelTarget = 0;
         this.zVel = 0;
         this.zVelTarget = 0;
+        this.filas = 50;
+        this.columnas = 50;
         this.rotationMatrix = mat4.create();
+        this.initTextures('models/shiphull.jpg');
     }
 
     getPosicion(u, v){
@@ -141,5 +153,35 @@ export default class Capsula extends Objeto3D{
         mat4.translate(this.matrizModelado,this.matrizModelado,this.posicion);        
         mat4.multiply(this.matrizModelado,this.matrizModelado,this.rotationMatrix);
         mat4.scale(this.matrizModelado, this.matrizModelado, this.escala);
+    }
+
+    getDireccionSpot(){
+        let translation = vec4.fromValues(1,0,0,1);
+        vec4.transformMat4(translation,translation,this.rotationMatrix);
+        translation[0] = translation[0]/Math.sqrt(translation[0]*translation[0]+translation[1]*translation[1]+translation[2]*translation[2]);
+        translation[1] = translation[1]/Math.sqrt(translation[0]*translation[0]+translation[1]*translation[1]+translation[2]*translation[2]);
+        translation[2] = translation[2]/Math.sqrt(translation[0]*translation[0]+translation[1]*translation[1]+translation[2]*translation[2]);
+        return vec3.fromValues(translation[0], translation[1], translation[2]);
+    }
+
+    getPosActualSpot(){
+        let retorno = vec4.create();
+        vec4.transformMat4(retorno, vec4.fromValues(0,0,0,1), this.matrizModelado);
+        let traslacion = vec4.fromValues(0.4,0,0,1);
+        vec4.transformMat4(traslacion, traslacion, this.rotationMatrix);
+        vec4.add(retorno, retorno, traslacion);
+        return retorno;
+    }
+
+    getPosLuzRoja(){
+        let retorno = vec4.create();
+        vec4.transformMat4(retorno, vec4.fromValues(0.4, 0, -0.385, 1), this.matrizModelado);
+        return retorno;
+    }
+
+    getPosLuzVerde(){
+        let retorno = vec4.create();
+        vec4.transformMat4(retorno, vec4.fromValues(0.4, 0, 0.385,1), this.matrizModelado);
+        return retorno;
     }
 }

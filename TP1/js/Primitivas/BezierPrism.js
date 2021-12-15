@@ -5,8 +5,8 @@ import {getBezierPointCuadratic} from './CurvasBezier.js';
 var vec3 = glMatrix.vec3;
 
 export default class Prisma extends Objeto3D{
-    constructor(largo, ancho, alto){
-        super();
+    constructor(largo, ancho, alto, glContainer){
+        super(glContainer);
         this.largo = largo;
         this.ancho = ancho;
         this.alto = alto;

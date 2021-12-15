@@ -15,14 +15,29 @@ function productoVectorial(v1, v2){
     return [x,y,z];
 }
 
+//Usada por this.image que tiene bindeados los parametros en initTexture
+function loadTexture(){
+    let gl = this.glContainer.getGL();
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+
 
 export default class Objeto3D{
     
     //Atributos Privados
-    constructor(){
+    constructor(glContainerObj){
+        this.glContainer = glContainerObj;
+        this.texture = null;
+        this.image = null;
         this.vertexBuffer = null;
         this.indexBuffer = null;
-        this.color = vec3.create();
+        this.color = null;
         this.matrizModelado = mat4.create();
         this.posicion = vec3.create();
         this.rotacion = vec3.create();
@@ -42,6 +57,14 @@ export default class Objeto3D{
         this.ejeRotacionFinal = vec3.create();
         this.anguloRotacionFinal = 0;
         this.lastNormalCalculated = null;
+        this.shininess = 1;
+    }
+
+    setShininess(shininess){
+        this.shininess = shininess;
+        this.hijos.forEach(function(hijo){
+            hijo.setShininess(shininess);
+        });
     }
 
     //Método privado
@@ -167,8 +190,19 @@ export default class Objeto3D{
     generarColor(glContainer){
         let gl = glContainer.getGL();
         let glProgram = glContainer.getGLProgram();
-        let colorVecUniform = gl.getUniformLocation(glProgram, "colorVec");
-        gl.uniform3fv(colorVecUniform, this.color);
+
+        //Codigo para color uniforme
+        if (this.texture == null && this.color != null){
+            let colorVecUniform = gl.getUniformLocation(glProgram, "colorVec");
+            gl.uniform3fv(colorVecUniform, this.color);
+        }else{
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.uniform1i(gl.getUniformLocation(glProgram, 'uSampler'), 0);
+            gl.uniform1f(gl.getUniformLocation(glProgram, 'Shininess'), this.shininess);
+        }
+
+        
     }
 
     //Métodos públicos
@@ -182,6 +216,7 @@ export default class Objeto3D{
     }
 
     setColor(r,g,b){
+        this.color = vec3.create();
         vec3.set(this.color, r, g, b);
         this.hijos.forEach(function(hijo){
             hijo.setColor(r,g,b);
@@ -259,6 +294,7 @@ export default class Objeto3D{
     }
 
     getCoordenadasTextura(u,v){
+        return [u,v];
         //Metodo para override de los que hereden de objeto 3D. Cada objeto debe autoposicionarse su textura.
         //Utilizado para dibujar.
     }
@@ -284,6 +320,11 @@ export default class Objeto3D{
         gl.bindBuffer(gl.ARRAY_BUFFER, this.trianglesNormalBuffer);
         gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
 
+        let vertexUVAttribute = gl.getAttribLocation(glProgram, "aTextureCoord");
+        gl.enableVertexAttribArray(vertexUVAttribute);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.trianglesUVBuffer);
+        gl.vertexAttribPointer(vertexUVAttribute, 2, gl.FLOAT, false, 0, 0);
+
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.trianglesIndexBuffer);
         gl.drawElements( gl.TRIANGLE_STRIP, this.trianglesIndexBuffer.number_vertex_point, gl.UNSIGNED_SHORT, 0);
 
@@ -308,10 +349,10 @@ export default class Objeto3D{
         mat4.copy(rotationMatrix, matriz);
         mat4.invert(rotationMatrix, rotationMatrix);
         mat4.transpose(rotationMatrix, rotationMatrix);
-        var normalMatrixUniform = gl.getUniformLocation(glProgram, "modelMatrix");
-
+        var normalMatrixUniform = gl.getUniformLocation(glProgram, "normalMatrix");
         gl.uniformMatrix4fv(normalMatrixUniform, false, rotationMatrix);
         gl.uniformMatrix4fv(modelMatrixUniform, false, matriz);
+
         this.drawInScene(glContainer);
         this.hijos.forEach(function(hijo){
             hijo.animate(glContainer, matriz);
@@ -321,4 +362,31 @@ export default class Objeto3D{
     getMatrizModelado(){
         return this.matrizModelado;
     }
+
+    
+
+    initTextures(srcImage){
+        //CARGA DE LA TEXTURA DEL OBJETO
+        let gl = this.glContainer.getGL();
+        this.texture = gl.createTexture();
+        if (!this.texture){
+            console.log("ERROR: Not able to create texture.");
+        }
+        this.image = new Image();
+        if (!this.image){
+            console.log("ERROR: Not able to create image.");
+        }
+        this.image.src = srcImage;
+        this.image.glContainer = this.glContainer;
+        this.image.texture = this.texture;
+        this.image.onload = loadTexture;
+    }
+
+    getPosActual(){
+        let retorno = vec4.create();
+        vec4.transformMat4(retorno, vec4.fromValues(0,0,0,1), this.matrizModelado);
+        return retorno;
+    }
+
+    
 }

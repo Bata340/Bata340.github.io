@@ -5,11 +5,11 @@ import getBezierPointLinear from './CurvasBezier.js';
 var vec3 = glMatrix.vec3;
 
 export default class ToroidePrismatico extends Objeto3D{
-    constructor(largo, ancho, radioRecorrido, ratioLargoRecorrido=1){
+    constructor(largo, ancho, radioRecorrido, ratioLargoRecorrido=1, glContainer){
         if(ratioLargoRecorrido > 1){
             throw new Error('Ratio Recorrido en ToroidePrismático es mayor a 1: ' + ratioLargoRecorrido);
         }
-        super();
+        super(glContainer);
         this.largo = largo;
         this.ancho = ancho;
         this.radioRecorrido = radioRecorrido;

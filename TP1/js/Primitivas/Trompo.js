@@ -3,11 +3,11 @@ import Objeto3D from '../Objeto3D.js';
 
 //TAMBIEN UTILIZABLE COMO CILINDRIO SI TIENE RATIO RECORRIDO EN 0
 export default class Trompo extends Objeto3D{
-    constructor(radioInicial, longitud, ratioRecorrido){
+    constructor(radioInicial, longitud, ratioRecorrido, glContainer){
         if(ratioRecorrido > 1){
             throw new Error('Ratio Recorrido en Trompo es mayor a 1: ' + ratioRecorrido);
         }
-        super();
+        super(glContainer);
         this.radioInicial = radioInicial;
         this.ratioRecorrido = ratioRecorrido;
         this.longitud = longitud;

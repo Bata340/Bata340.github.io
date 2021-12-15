@@ -7,22 +7,22 @@ import '../gl-matrix/gl-matrix-min.js';
 var vec3 = glMatrix.vec3;
 
 export default class Estacion extends Objeto3D{
-    constructor(cantidadPaneles, rotacionPaneles, velocidadRotacionAro, cantidadModulosAro){
-        super();
+    constructor(cantidadPaneles, rotacionPaneles, velocidadRotacionAro, cantidadModulosAro, glContainer){
+        super(glContainer);
         this.filas = 0;
         this.columnas = 0;
 
-        let aro = new Aro(cantidadModulosAro);
+        let aro = new Aro(cantidadModulosAro, glContainer);
         aro.setVelocidadRotacion(velocidadRotacionAro);
         this.hijos.push(aro);
 
-        let nucleo = new Nucleo();
+        let nucleo = new Nucleo(glContainer);
         nucleo.setRotacion(1,0,0,-Math.PI/2);
         nucleo.setPosicion(0,-0.5,0);
         nucleo.setEscala(0.5,0.5,0.5);
         this.hijos.push(nucleo);
 
-        let paneles = new Paneles(cantidadPaneles, rotacionPaneles);
+        let paneles = new Paneles(cantidadPaneles, rotacionPaneles, glContainer);
         paneles.setEscala(0.5,0.5,0.5);
         paneles.setRotacion(1,0,0,Math.PI/2);
         paneles.setPosicion(0,2.6,0);
@@ -47,5 +47,13 @@ export default class Estacion extends Objeto3D{
         //Debido a rotación respecto de X de PI/2 retorno así la posición
         return vec3.fromValues(posSatelite[0], -posSatelite[2], -posSatelite[1]);
         
+    }
+
+    setRotacionPaneles(rotacion){
+        this.hijos[2].setRotacionPaneles(rotacion);
+    }
+
+    setVelocidadRotacionAro(velocidadRotacionAro){
+        this.hijos[0].setVelocidadRotacion(velocidadRotacionAro);
     }
 }

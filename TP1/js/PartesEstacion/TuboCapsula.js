@@ -5,8 +5,8 @@ import {getBezierPointCuadratic} from '../Primitivas/CurvasBezier.js';
 var vec3 = glMatrix.vec3;
 
 export default class TuboCapsula extends Objeto3D{
-    constructor(){
-        super();
+    constructor(glContainer){
+        super(glContainer);
     }
 
     logKey(e){
