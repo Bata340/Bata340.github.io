@@ -2,6 +2,7 @@ import './gl-matrix/gl-matrix-min.js';
 
 var mat4 = glMatrix.mat4;
 var vec3 = glMatrix.vec3;
+var vec4 = glMatrix.vec4;
 
 const ESTACION = 1;
 const PANELES = 2;
@@ -47,17 +48,17 @@ export default class Camara{
 
     getCameraMatrix(){
 
-        /*Adaptar para utilizar guiñada y cabeceo y no una única rotación.*/
         if (this.camaraActual == ESTACION){
             let matrix = mat4.create();
-            mat4.identity(matrix);
             let posicionCamara = vec3.fromValues(
-                -this.posicionEstacion[0] + this.alejamiento*Math.sin(this.rotacionGuin)*Math.cos(this.rotacionCabeceo),
-                -this.posicionEstacion[1] + this.alejamiento*Math.sin(this.rotacionGuin)*Math.sin(this.rotacionCabeceo),
-                -this.posicionEstacion[2] + this.alejamiento*Math.cos(this.rotacionGuin)
+                -this.posicionEstacion[0] + this.alejamiento,
+                -this.posicionEstacion[1],
+                -this.posicionEstacion[2]
             );
             
             mat4.lookAt(matrix, posicionCamara, vec3.fromValues(-this.posicionEstacion[0],-this.posicionEstacion[1], -this.posicionEstacion[2]), vec3.fromValues(0,1,0));
+            mat4.rotate(matrix, matrix, this.rotacionGuin, vec3.fromValues(0,1,0));
+            mat4.rotate(matrix, matrix, this.rotacionCabeceo, vec3.fromValues(1,0,0));
             return matrix;
         }
 
@@ -65,21 +66,16 @@ export default class Camara{
             let matrix = mat4.create();
             mat4.identity(matrix);
             let posicionCamara = vec3.fromValues(
-                -this.posicionPaneles[0] + this.alejamiento*Math.sin(this.rotacionGuin)*Math.cos(this.rotacionCabeceo),
-                -this.posicionPaneles[1] + this.alejamiento*Math.sin(this.rotacionGuin)*Math.sin(this.rotacionCabeceo),
-                -this.posicionPaneles[2] + this.alejamiento*Math.cos(this.rotacionGuin)
+                -this.posicionPaneles[0] + this.alejamiento,
+                -this.posicionPaneles[1],
+                -this.posicionPaneles[2]
             );
             
             mat4.lookAt(matrix, posicionCamara, vec3.fromValues(-this.posicionPaneles[0],-this.posicionPaneles[1], -this.posicionPaneles[2]), vec3.fromValues(0,1,0));
-            /*//Aplico alejamiento o acercamiento
-            mat4.translate(matrix, matrix, [0,0,-this.alejamiento]);
-
-            //Utilizo el Y original del módulo de paneles para rotar, y roto respecto de todos los ejes
-            mat4.rotate(matrix, matrix, this.rotacionActual, [1,-this.posicionPaneles[2],1]);
-            mat4.multiply(matrix, matrixRotX, matrix);
-            mat4.multiply(matrix, matrixRotY, matrix);
-            //Utilizo el nuevo eje coordenado (El de post-rotación que es el que me traje como parametro) para trasladar.
-            mat4.translate(matrix, matrix, [this.posicionPaneles[0], this.posicionPaneles[1], this.posicionPaneles[2]]);*/
+            mat4.translate(matrix, matrix,  vec3.fromValues(-this.posicionPaneles[0],-this.posicionPaneles[1], -this.posicionPaneles[2]));
+            mat4.rotate(matrix, matrix, this.rotacionGuin, vec3.fromValues(0,1,0));
+            mat4.rotate(matrix, matrix, this.rotacionCabeceo, vec3.fromValues(1,0,0));
+            mat4.translate(matrix, matrix,  vec3.fromValues(this.posicionPaneles[0], this.posicionPaneles[1], this.posicionPaneles[2]));
 
             return matrix;
 
