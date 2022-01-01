@@ -481,7 +481,7 @@ document.addEventListener('keyup', (event) => {
 let mouseClick = false;
 let oldX = 0;
 let oldY = 0;
-let velRot = 0.03;
+let velRot = 0.05;
 
 let downListener = () => {
     mouseClick = true;

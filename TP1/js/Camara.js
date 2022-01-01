@@ -30,11 +30,18 @@ export default class Camara{
     }
 
     sumGiroGuin(guin){
-        this.rotacionGuin += guin;
+        if(this.rotacionGuin < Math.PI*2 && guin > 0 || this.rotacionGuin > 0 && guin < 0){
+            this.rotacionGuin += guin;
+        }else if(this.rocaionGuin >= Math.PI*2 && guin>0){
+            this.rotacionGuin = 0;
+        }else{
+            this.rotacionGuin = 2*Math.PI;
+        }
     }
 
     sumGiroCab(cabe){
-        this.rotacionCabeceo += cabe;
+        if(this.rotacionCabeceo < 1.483 && cabe > 0 || this.rotacionCabeceo > -1.483 && cabe < 0)
+            this.rotacionCabeceo += cabe;
     }
 
     acercar(){
