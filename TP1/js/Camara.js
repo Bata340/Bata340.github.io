@@ -30,11 +30,10 @@ export default class Camara{
     }
 
     sumGiroGuin(guin){
-        if(this.rotacionGuin < Math.PI*2 && guin > 0 || this.rotacionGuin > 0 && guin < 0){
-            this.rotacionGuin += guin;
-        }else if(this.rocaionGuin >= Math.PI*2 && guin>0){
+        this.rotacionGuin += guin;
+        if(this.rotacionGuin >= Math.PI*2 && guin > 0){
             this.rotacionGuin = 0;
-        }else{
+        }else if (this.rotacionGuin <= 0 && guin < 0){
             this.rotacionGuin = 2*Math.PI;
         }
     }

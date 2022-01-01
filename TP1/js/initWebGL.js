@@ -481,7 +481,7 @@ document.addEventListener('keyup', (event) => {
 let mouseClick = false;
 let oldX = 0;
 let oldY = 0;
-let velRot = 0.05;
+let velRot = 0.01;
 
 let downListener = () => {
     mouseClick = true;
@@ -492,16 +492,16 @@ let moveListener = (e) => {
     
     if (mouseClick) {
       if (e.pageX > oldX){
-        camara.sumGiroGuin(velRot);
+        camara.sumGiroGuin((e.pageX-oldX)*velRot);
       }
       else if(e.pageX < oldX){
-        camara.sumGiroGuin(-velRot);
+        camara.sumGiroGuin((e.pageX-oldX)*velRot);
       }
       if(e.pageY > oldY){
-        camara.sumGiroCab(velRot);
+        camara.sumGiroCab((e.pageY - oldY)*velRot);
       }
       else if(e.pageY < oldY){
-        camara.sumGiroCab(-velRot);
+        camara.sumGiroCab((e.pageY - oldY)*velRot);
       }
     }
     oldX = e.pageX;
